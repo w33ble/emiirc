@@ -33,28 +33,28 @@ const parseNames = line =>
 
 // maps line parser results to events
 const lineMap = {
-  [END_MOTD]: (_, { emitter }) => emitter.emit('motd'),
-  [JOIN_TOPIC]: (parts, { emitter }) =>
+  [END_MOTD]: ({ emitter }) => emitter.emit('motd'),
+  [JOIN_TOPIC]: ({ parts, emitter }) =>
     emitter.emit('join_topic', {
       room: getPart(parts, 2),
       topic: getPartFrom(parts, 4).slice(1),
     }),
-  [JOIN_NAMES]: (parts, { emitter, line }) =>
+  [JOIN_NAMES]: ({ parts, emitter, line }) =>
     emitter.emit('join_users', {
       room: getPart(parts, 2),
       users: parseNames(line),
     }),
-  [JOIN]: (parts, { emitter }) =>
+  [JOIN]: ({ parts, emitter }) =>
     emitter.emit('join', {
       room: getPart(parts, 2),
       user: parseUsername(parts),
     }),
-  [PART]: (parts, { emitter }) =>
+  [PART]: ({ parts, emitter }) =>
     emitter.emit('part', {
       room: getPart(parts, 2),
       user: parseUsername(parts),
     }),
-  [PRIVMSG]: (parts, { emitter, options }) => {
+  [PRIVMSG]: ({ parts, emitter, options }) => {
     const cmd = `!${options.nick}`;
     const user = parseUsername(parts);
     const room = getPart(parts, 2);
@@ -67,7 +67,7 @@ const lineMap = {
       emitter.emit(room === options.nick ? 'private' : 'message', payload);
     }
   },
-  [QUIT]: (parts, { emitter }) =>
+  [QUIT]: ({ parts, emitter }) =>
     emitter.emit('quit', {
       user: parseUsername(parts),
       reason: getPartFrom(parts, 2).slice(1),
@@ -80,6 +80,7 @@ export default class Client {
     this.port = port;
     this.options = {
       nick: 'emiirc-bot',
+      pass: null,
       username: 'emiirc',
       realname: 'emiirc bot',
       channels: [],
@@ -199,7 +200,8 @@ export default class Client {
     // pass input off to line handlers, if a match exists
     const fn = lineMap[getPart(parts, 1)];
     if (fn) {
-      fn(parts, {
+      fn({
+        parts,
         emitter: this.emitter,
         options: this.options,
         line,
