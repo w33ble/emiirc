@@ -34,7 +34,11 @@ const parseNames = line =>
 // maps line parser results to events
 const lineMap = {
   [END_MOTD]: (_, { emitter }) => emitter.emit('motd'),
-  [JOIN_TOPIC]: (parts, { emitter }) => emitter.emit('join_topic', getPartFrom(parts, 4).slice(1)),
+  [JOIN_TOPIC]: (parts, { emitter }) =>
+    emitter.emit('join_topic', {
+      room: getPart(parts, 2),
+      topic: getPartFrom(parts, 4).slice(1),
+    }),
   [JOIN_NAMES]: (parts, { emitter, line }) =>
     emitter.emit('join_users', {
       room: getPart(parts, 2),
