@@ -81,6 +81,7 @@ export default class Client {
       channels: [],
       secure: false,
       lazyCA: true,
+      login: true,
       ...opts,
     };
     this.network = this.options.secure ? tls : net;
@@ -93,6 +94,7 @@ export default class Client {
       disconnect: () => this.disconnect(),
       join: chan => this.join(chan),
       part: chan => this.part(chan),
+      login: () => this.login(),
       // emitter methods
       on: (...args) => this.emitter.on(...args),
       off: (...args) => this.emitter.off(...args),
@@ -115,7 +117,7 @@ export default class Client {
         this.connected = true;
         this.emitter.emit('connected');
 
-        this.login();
+        if (this.options.login) this.login();
       }
     );
 
