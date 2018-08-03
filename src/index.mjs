@@ -92,6 +92,8 @@ export default class Client {
       // public methods
       connect: () => this.connect(),
       disconnect: () => this.disconnect(),
+      send: input => this.send(input),
+      quit: msg => this.quit(msg),
       join: chan => this.join(chan),
       part: chan => this.part(chan),
       login: () => this.login(),
@@ -126,7 +128,7 @@ export default class Client {
       .on('close', () => {
         const networkError = !!this.connected;
         this.connected = false;
-        this.emitter.emit('close', networkError);
+        this.emitter.emit('close', { fromError: networkError });
       })
       .on('error', err => {
         this.emitter.emit('error', err);
@@ -156,6 +158,7 @@ export default class Client {
     const { nick, username, realname, channels } = this.options;
     this.send(`NICK ${nick}`);
     this.send(`USER ${username} 8 * :${realname}`);
+    this.emitter.emit('login', { user: nick });
 
     if (channels.length) {
       const c = !Array.isArray(channels) ? [channels] : channels;
@@ -169,11 +172,16 @@ export default class Client {
   }
 
   join(chan) {
-    this.send(`JOIN ${normalizeChannel(chan)}`)
+    this.send(`JOIN ${normalizeChannel(chan)}`);
   }
 
   part(chan) {
-    this.send(`PART ${normalizeChannel(chan)}`)
+    this.send(`PART ${normalizeChannel(chan)}`);
+  }
+
+  quit(msg = '') {
+    this.emitter.emit('quit');
+    this.send(`QUIT :${msg}`);
   }
 
   parseInput(line) {
