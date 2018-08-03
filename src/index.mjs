@@ -7,6 +7,7 @@ const EOL = '\r\n';
 const END_MOTD = 376;
 const JOIN_TOPIC = 332;
 const JOIN_NAMES = 353;
+const JOIN_FAILED = 477;
 const NOTICE = 'NOTICE';
 const JOIN = 'JOIN';
 const PART = 'PART';
@@ -59,6 +60,11 @@ const lineMap = {
     }
   },
   [END_MOTD]: ({ emitter }) => emitter.emit('motd'),
+  [JOIN_FAILED]: ({ parts, emitter }) =>
+    emitter.emit('join_failed', {
+      room: getPart(parts, 3),
+      msg: getPartFrom(parts, 4).slice(1),
+    }),
   [JOIN_TOPIC]: ({ parts, emitter }) =>
     emitter.emit('join_topic', {
       room: getPart(parts, 2),
