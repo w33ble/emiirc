@@ -6,6 +6,7 @@ const EOL = '\r\n';
 const END_MOTD = 376;
 const JOIN_TOPIC = 332;
 const JOIN_NAMES = 353;
+const NOTICE = 'NOTICE';
 const JOIN = 'JOIN';
 const PART = 'PART';
 const PRIVMSG = 'PRIVMSG';
@@ -33,6 +34,24 @@ const parseNames = line =>
 
 // maps line parser results to events
 const lineMap = {
+  [NOTICE]: ({ parts, emitter, options }) => {
+    const msg = getPartFrom(parts, 3);
+    if (/NickServ identify/i.test(msg)) {
+      emitter.emit('nick_unidentified', {
+        user: options.nick,
+        msg,
+      });
+    } else if (/now identified/i.test(msg)) {
+      emitter.emit('nick_identified', {
+        user: options.nick,
+        msg,
+      });
+    } else {
+      emitter.emit('notice', {
+        msg,
+      });
+    }
+  },
   [END_MOTD]: ({ emitter }) => emitter.emit('motd'),
   [JOIN_TOPIC]: ({ parts, emitter }) =>
     emitter.emit('join_topic', {
