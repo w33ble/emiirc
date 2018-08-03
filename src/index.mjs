@@ -197,6 +197,11 @@ export default class Client {
   parseInput(line) {
     const parts = line.split(' ');
 
+    // respond to server PING requests
+    if (parts[0] === 'PING') {
+      this.send(`PONG ${parts.slice(1).join(' ')}`);
+    }
+
     // pass input off to line handlers, if a match exists
     const fn = lineMap[getPart(parts, 1)];
     if (fn) {
