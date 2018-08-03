@@ -1,6 +1,6 @@
 {
   "name": "emiirc",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "event emitting irc client",
   "main": "index",
   "module": "index.mjs",
