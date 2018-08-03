@@ -109,10 +109,8 @@ export default class Client {
       pass: null,
       username: defaultNick,
       realname: 'an emiirc bot',
-      channels: [],
       secure: false,
       lazyCA: true,
-      login: true,
       ...opts,
     };
     this.network = this.options.secure ? tls : net;
@@ -127,7 +125,7 @@ export default class Client {
       quit: msg => this.quit(msg),
       join: chan => this.join(chan),
       part: chan => this.part(chan),
-      login: details => this.login(details),
+      setNick: details => this.setNick(details),
       // emitter methods
       on: (...args) => this.emitter.on(...args),
       off: (...args) => this.emitter.off(...args),
@@ -149,8 +147,7 @@ export default class Client {
         // called on connection
         this.connected = true;
         this.emitter.emit('connected');
-
-        if (this.options.login) this.login();
+        this.setNick();
       }
     );
 
@@ -185,21 +182,18 @@ export default class Client {
     this.connected = false;
   }
 
-  login(opt = {}) {
-    // update login details
+  setNick(opt = {}) {
+    // update nick details
     if (opt.nick) this.options.nick = opt.nick;
     if (opt.username) this.options.username = opt.username;
     if (opt.realname) this.options.realname = opt.realname;
 
-    const { nick, username, realname, channels } = this.options;
+    const { nick, username, realname } = this.options;
 
     this.send(`NICK ${nick}`);
     this.send(`USER ${username} 8 * :${realname}`);
+  }
 
-    if (channels != null && channels.length) {
-      const c = !Array.isArray(channels) ? [channels] : channels;
-      c.forEach(chan => this.join(chan));
-    }
   }
 
   send(input) {
