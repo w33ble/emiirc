@@ -121,6 +121,7 @@ export default class Client {
       // public methods
       connect: () => this.connect(),
       disconnect: () => this.disconnect(),
+      authenticate: pass => this.authenticate(pass),
       send: input => this.send(input),
       quit: msg => this.quit(msg),
       join: chan => this.join(chan),
@@ -194,6 +195,10 @@ export default class Client {
     this.send(`USER ${username} 8 * :${realname}`);
   }
 
+  authenticate(pass) {
+    if (pass) this.options.pass = pass;
+    this.send(`PRIVMSG NickServ :IDENTIFY ${this.options.nick} ${this.options.pass}`);
+    this.emitter.emit('authenticate');
   }
 
   send(input) {
