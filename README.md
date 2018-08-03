@@ -18,13 +18,14 @@ const client = new Client('irc.freenode.net', '6667', {
 });
 
 client.on('connect', () => console.log('CONNECTED'));
-client.on('close', fromErr => {
+client.on('close', ({ fromError }) => {
   console.log('DISCONNECTED');
-  if (fromErr) {
+  if (fromError) {
     console.log('RECONNECTING...');
     client.connect();
   }
 });
+
 // client.on('data', data => console.log('DEBUG|', data));
 client.on('error', err => console.error(err));
 client.on('send', d => console.log('SEND|', d));
@@ -61,6 +62,7 @@ SEND| JOIN #emiirc-demo-channel
 MOTD complete
 private| { user: 'frigg', room: 'mybot', msg: '\u0001VERSION\u0001\r' }
 join| { user: 'mybot', room: '#emiirc-demo-channel' }
+join_topic| { room: 'mybot', topic: 'testing out emiirc\r' }
 join_users| { room: 'mybot', users: [ 'mybot', 'w33ble' ] }
 message| { user: 'w33ble',
   room: '#emiirc-demo-channel',
