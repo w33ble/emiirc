@@ -127,12 +127,14 @@ export default class Client {
       // public methods
       connect: () => this.connect(),
       disconnect: () => this.disconnect(),
-      authenticate: pass => this.authenticate(pass),
       send: input => this.send(input),
-      quit: msg => this.quit(msg),
+      authenticate: pass => this.authenticate(pass),
+      setNick: details => this.setNick(details),
       join: chan => this.join(chan),
       part: chan => this.part(chan),
-      setNick: details => this.setNick(details),
+      quit: msg => this.quit(msg),
+      // allow extension
+      use: fn => fn.call(this),
       // emitter methods
       on: (...args) => this.emitter.on(...args),
       off: (...args) => this.emitter.off(...args),
