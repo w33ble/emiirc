@@ -1,5 +1,6 @@
 import tls from 'tls';
 import net from 'net';
+import crypto from 'crypto';
 import { EventEmitter } from 'events';
 
 const EOL = '\r\n';
@@ -13,6 +14,11 @@ const PRIVMSG = 'PRIVMSG';
 const QUIT = 'QUIT';
 
 // helper functions
+const randString = len =>
+  crypto
+    .randomBytes(Math.ceil(len / 2))
+    .toString('hex')
+    .slice(0, len);
 const normalizeChannel = chan => (chan[0] === '#' ? chan : `#${chan}`);
 const plainUsername = n => n.replace(/^[~&@%+]/g, '');
 const getPart = (parts, i = 0, rest = false) => {
@@ -97,11 +103,12 @@ export default class Client {
   constructor(hostname, port = 6667, opts = {}) {
     this.hostname = hostname;
     this.port = port;
+    const defaultNick = `emiirc-${randString(6)}`;
     this.options = {
-      nick: 'emiirc-bot',
+      nick: defaultNick,
       pass: null,
-      username: 'emiirc',
-      realname: 'emiirc bot',
+      username: defaultNick,
+      realname: 'an emiirc bot',
       channels: [],
       secure: false,
       lazyCA: true,
