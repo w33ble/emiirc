@@ -100,7 +100,7 @@ export default class Client {
       quit: msg => this.quit(msg),
       join: chan => this.join(chan),
       part: chan => this.part(chan),
-      login: () => this.login(),
+      login: details => this.login(details),
       // emitter methods
       on: (...args) => this.emitter.on(...args),
       off: (...args) => this.emitter.off(...args),
@@ -158,13 +158,18 @@ export default class Client {
     this.connected = false;
   }
 
-  login() {
+  login(opt = {}) {
+    // update login details
+    if (opt.nick) this.options.nick = opt.nick;
+    if (opt.username) this.options.username = opt.username;
+    if (opt.realname) this.options.realname = opt.realname;
+
     const { nick, username, realname, channels } = this.options;
+
     this.send(`NICK ${nick}`);
     this.send(`USER ${username} 8 * :${realname}`);
-    this.emitter.emit('login', { user: nick });
 
-    if (channels.length) {
+    if (channels != null && channels.length) {
       const c = !Array.isArray(channels) ? [channels] : channels;
       c.forEach(chan => this.join(chan));
     }
