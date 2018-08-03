@@ -7,10 +7,12 @@ const END_MOTD = 376;
 const JOIN_TOPIC = 332;
 const JOIN_NAMES = 353;
 const JOIN = 'JOIN';
+const PART = 'PART';
 const PRIVMSG = 'PRIVMSG';
 const QUIT = 'QUIT';
 
 // helper functions
+const normalizeChannel = chan => (chan[0] === '#' ? chan : `#${chan}`);
 const plainUsername = n => n.replace(/^[~&@%+]/g, '');
 const getPart = (parts, i = 0, rest = false) => {
   const part = parts[i];
@@ -40,8 +42,13 @@ const lineMap = {
     }),
   [JOIN]: (parts, { emitter }) =>
     emitter.emit('join', {
-      user: parseUsername(parts),
       room: getPart(parts, 2),
+      user: parseUsername(parts),
+    }),
+  [PART]: (parts, { emitter }) =>
+    emitter.emit('part', {
+      room: getPart(parts, 2),
+      user: parseUsername(parts),
     }),
   [PRIVMSG]: (parts, { emitter, options }) => {
     const cmd = `!${options.nick}`;
@@ -50,9 +57,9 @@ const lineMap = {
     const msg = getPartFrom(parts, 3).slice(1);
 
     if (msg.indexOf(`!${options.nick}`) === 0) {
-      emitter.emit('command', { user, room, msg: msg.replace(cmd, '').trim() });
+      emitter.emit('command', { room, user, msg: msg.replace(cmd, '').trim() });
     } else {
-      const payload = { user, room, msg };
+      const payload = { room, user, msg };
       emitter.emit(room === options.nick ? 'private' : 'message', payload);
     }
   },
@@ -81,8 +88,12 @@ export default class Client {
     this.connected = false;
 
     return {
+      // public methods
       connect: () => this.connect(),
       disconnect: () => this.disconnect(),
+      join: chan => this.join(chan),
+      part: chan => this.part(chan),
+      // emitter methods
       on: (...args) => this.emitter.on(...args),
       off: (...args) => this.emitter.off(...args),
       once: (...args) => this.emitter.once(...args),
@@ -92,6 +103,7 @@ export default class Client {
   connect() {
     if (this.connected) throw new Error('Only one connection is allowed');
 
+    // create the network socket
     this.socket = this.network.connect(
       {
         host: this.hostname || 'localhost',
@@ -107,7 +119,7 @@ export default class Client {
       }
     );
 
-    // attach
+    // attach global socket listeners
     this.socket
       .on('close', () => {
         const networkError = !!this.connected;
@@ -145,13 +157,21 @@ export default class Client {
 
     if (channels.length) {
       const c = !Array.isArray(channels) ? [channels] : channels;
-      c.forEach(chan => this.send(`JOIN #${chan}`));
+      c.forEach(chan => this.join(chan));
     }
   }
 
   send(input) {
     this.emitter.emit('send', input);
     this.socket.write(`${input}${EOL}`);
+  }
+
+  join(chan) {
+    this.send(`JOIN ${normalizeChannel(chan)}`)
+  }
+
+  part(chan) {
+    this.send(`PART ${normalizeChannel(chan)}`)
   }
 
   parseInput(line) {
